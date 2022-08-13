@@ -1,7 +1,5 @@
 
 ## to get started on scraping
-# https://www.scrapingbee.com/blog/web-scraping-r/
-
 # https://www.scraperapi.com/blog/web-scraping-with-r/
 
 # https://www.dataquest.io/blog/web-scraping-in-r-rvest/
@@ -132,3 +130,47 @@ for (page_result in seq(from = 1, to = 101, by = 50)) {
   synopsis = page %>% html_nodes(".ratings-bar+ .text-muted") %>% html_text() %>% str_squish()
   movies = rbind(movies, data.frame(title, movie_url, year, rating, synopsis, stringsAsFactors = FALSE))
 }
+
+## ****************
+
+library(rvest)
+link <- "https://www.heroic.us/optimize"
+page <- read_html(link)
+category <- 
+  page %>% 
+  html_nodes(".formatted-type p strong a") %>% 
+  html_attr('href') %>% 
+  set_names(html_text(html_nodes(page, ".formatted-type p strong a")))
+
+titles <- tibble()
+for (current_category in category) {
+  print(glue('{current_category}'))
+  subpage <- read_html(current_category)
+  title <-
+    subpage %>% 
+    html_nodes("header a h2") %>% 
+    html_text() %>% 
+    str_squish()
+  title_type <-
+    subpage %>% 
+    html_nodes(".badge") %>% 
+    html_text() %>% 
+    str_squish() %>% 
+    discard(~ .x == 'Locked')
+  # subtitle <-
+  #   subpage %>% 
+  #   html_nodes("header div span") %>% 
+  #   html_text() %>% 
+  #   str_squish()
+  synopsis <- 
+    subpage %>% 
+    html_nodes(".clamp-sm") %>% 
+    html_text() %>% 
+    str_squish()
+  titles <- rbind(titles, tibble(title, title_type, synopsis))
+  Sys.sleep(5)
+}
+
+
+
+
