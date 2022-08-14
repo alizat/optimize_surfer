@@ -105,45 +105,46 @@ suppressMessages({
 
 ## ****************
 
-library(rvest)
-link = "https://www.imdb.com/search/title/?title_type=feature&num_votes=25000,&genres=adventure"
-page = read_html(link)
-title = page %>% html_nodes(".lister-item-header a") %>% html_text()
-year  = page %>% html_nodes(".text-muted.unbold") %>% html_text()
-rating = page %>% html_nodes(".ratings-imdb-rating strong") %>% html_text()
-synopsis = page %>% html_nodes(".ratings-bar+ .text-muted") %>% html_text() %>% str_squish()
-movies = data.frame(title, year, rating, synopsis, stringsAsFactors = FALSE)
-movies = 
-  movies %>% 
-  mutate(year = year %>% str_replace('\\(I\\)', '')) %>% 
-  extract(year, into = 'year', regex = '\\((.*)\\)')
-# movie_url = page %>% html_nodes(".lister-item-header a") %>% html_attr("href")
-movie_url = page %>% html_nodes(".lister-item-header a") %>% html_attr("href") %>% paste("https://www.imdb.com", ., sep="")
-
-movies <- tibble()
-for (page_result in seq(from = 1, to = 101, by = 50)) {
-  link = paste0("https://www.imdb.com/search/title/?title_type=feature&num_votes=25000,&genres=adventure&start=", page_result, "&ref_=adv_nxt")
-  page = read_html(link)
-  title = page %>% html_nodes(".lister-item-header a") %>% html_text()
-  year  = page %>% html_nodes(".text-muted.unbold") %>% html_text()
-  rating = page %>% html_nodes(".ratings-imdb-rating strong") %>% html_text()
-  synopsis = page %>% html_nodes(".ratings-bar+ .text-muted") %>% html_text() %>% str_squish()
-  movies = rbind(movies, data.frame(title, movie_url, year, rating, synopsis, stringsAsFactors = FALSE))
-}
+# library(rvest)
+# link = "https://www.imdb.com/search/title/?title_type=feature&num_votes=25000,&genres=adventure"
+# page = read_html(link)
+# title = page %>% html_nodes(".lister-item-header a") %>% html_text()
+# year  = page %>% html_nodes(".text-muted.unbold") %>% html_text()
+# rating = page %>% html_nodes(".ratings-imdb-rating strong") %>% html_text()
+# synopsis = page %>% html_nodes(".ratings-bar+ .text-muted") %>% html_text() %>% str_squish()
+# movies = data.frame(title, year, rating, synopsis, stringsAsFactors = FALSE)
+# movies = 
+#   movies %>% 
+#   mutate(year = year %>% str_replace('\\(I\\)', '')) %>% 
+#   extract(year, into = 'year', regex = '\\((.*)\\)')
+# # movie_url = page %>% html_nodes(".lister-item-header a") %>% html_attr("href")
+# movie_url = page %>% html_nodes(".lister-item-header a") %>% html_attr("href") %>% paste("https://www.imdb.com", ., sep="")
+# 
+# movies <- tibble()
+# for (page_result in seq(from = 1, to = 101, by = 50)) {
+#   link = paste0("https://www.imdb.com/search/title/?title_type=feature&num_votes=25000,&genres=adventure&start=", page_result, "&ref_=adv_nxt")
+#   page = read_html(link)
+#   title = page %>% html_nodes(".lister-item-header a") %>% html_text()
+#   year  = page %>% html_nodes(".text-muted.unbold") %>% html_text()
+#   rating = page %>% html_nodes(".ratings-imdb-rating strong") %>% html_text()
+#   synopsis = page %>% html_nodes(".ratings-bar+ .text-muted") %>% html_text() %>% str_squish()
+#   movies = rbind(movies, data.frame(title, movie_url, year, rating, synopsis, stringsAsFactors = FALSE))
+# }
 
 ## ****************
 
 library(rvest)
 link <- "https://www.heroic.us/optimize"
 page <- read_html(link)
-category <- 
+categories <- 
   page %>% 
   html_nodes(".formatted-type p strong a") %>% 
   html_attr('href') %>% 
   set_names(html_text(html_nodes(page, ".formatted-type p strong a")))
 
 titles <- tibble()
-for (current_category in category) {
+for (i in 1:length(categories)) {
+  current_category <- categories[i]
   print(glue('{current_category}'))
   subpage <- read_html(current_category)
   title <-
@@ -167,7 +168,7 @@ for (current_category in category) {
     html_nodes(".clamp-sm") %>% 
     html_text() %>% 
     str_squish()
-  titles <- rbind(titles, tibble(title, title_type, synopsis))
+  titles <- rbind(titles, tibble(title, title_type, synopsis) %>% mutate(category = names(current_category)))
   Sys.sleep(5)
 }
 
